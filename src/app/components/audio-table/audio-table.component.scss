@@ -1,0 +1,17 @@
+@use "../../../styles/variables.scss";
+
+.mat-column-id {
+  width: 1.875rem;
+}
+
+.mat-column-filename {
+  width: 9.375rem;
+}
+
+.mat-mdc-row .mat-mdc-cell {
+  cursor: pointer;
+}
+
+.mat-mdc-row:hover .mat-mdc-cell {
+  background-color: variables.$primary;
+}

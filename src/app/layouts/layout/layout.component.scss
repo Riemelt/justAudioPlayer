@@ -1,0 +1,8 @@
+@use "../../../styles/mixins.scss";
+
+.layout {
+  @extend %container;
+
+  max-width: 720px;
+  margin: 0 auto;
+}

@@ -1,1 +1,15 @@
-/* You can add global styles to this file, and also import other style files */
+@use "./styles/variables.scss";
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  font-size: 16px;
+  height: 100%;
+  min-width: 320px;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  margin: 0 auto;
+  color: variables.$darkest;
+}
