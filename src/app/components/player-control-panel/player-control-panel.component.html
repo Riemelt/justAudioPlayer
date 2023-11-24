@@ -1,4 +1,32 @@
-<app-icon-button class="play" type="play_arrow" ariaLabel="Play button" />
-<app-icon-button type="skip_previous" ariaLabel="Previous track" />
-<app-icon-button type="stop" ariaLabel="Reset button" />
-<app-icon-button type="skip_next" ariaLabel="Next track" />
+<app-icon-button
+  *ngIf="!isPlaying; else pause"
+  class="play"
+  type="play_arrow"
+  ariaLabel="Play button"
+  (onClick)="handlePlayButton()"
+/>
+<ng-template #pause>
+  <app-icon-button
+    class="play"
+    type="pause"
+    ariaLabel="Pause button"
+    (onClick)="handlePauseButton()"
+  />
+</ng-template>
+<app-icon-button
+  type="skip_previous"
+  ariaLabel="Previous track"
+  (onClick)="handlePreviousButton()"
+  [disabled]="index === 0"
+/>
+<app-icon-button
+  type="stop"
+  ariaLabel="Reset button"
+  (onClick)="handleStopButton()"
+/>
+<app-icon-button
+  type="skip_next"
+  ariaLabel="Next track"
+  (onClick)="handleNextButton()"
+  [disabled]="index + 1 >= total"
+/>

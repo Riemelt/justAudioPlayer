@@ -18,7 +18,9 @@ export class AudioTableComponent implements OnInit {
 
   constructor(public audioPlayer: AudioPlayerService) {}
 
-  ngOnInit(): void {
-    this.audioPlayer.fetchAudioData();
+  ngOnInit(): void {}
+
+  onRowClick(id: number) {
+    this.audioPlayer.skipTo(id);
   }
 }

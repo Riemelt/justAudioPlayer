@@ -1,8 +1,39 @@
+@use "../../../styles/variables.scss";
+
 :host {
   display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  @media (max-width: variables.$md) {
+    flex-direction: column;
+  }
 }
 
 .progress {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+
+  @media (max-width: variables.$md) {
+    width: 100%;
+  }
+}
+
+.progress-slider {
   margin: 0 20px;
-  width: 100%;
+  flex-grow: 1;
+}
+
+.timer {
+  margin-left: 15px;
+  display: flex;
+  gap: 5px;
+}
+
+.volume {
+  @media (max-width: variables.$md) {
+    width: 100%;
+  }
 }

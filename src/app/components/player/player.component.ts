@@ -23,7 +23,23 @@ export class PlayerComponent implements OnInit {
 
   ngOnInit(): void {}
 
-  playSound() {
+  onPause() {
+    this.audioPlayer.pause();
+  }
+
+  onPlay() {
     this.audioPlayer.play();
+  }
+
+  onStop() {
+    this.audioPlayer.stop();
+  }
+
+  onPrevious() {
+    this.audioPlayer.skip('previous');
+  }
+
+  onNext() {
+    this.audioPlayer.skip('next');
   }
 }

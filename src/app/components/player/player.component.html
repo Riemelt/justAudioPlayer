@@ -1,5 +1,19 @@
-<app-player-control-panel />
-<mat-slider class="progress">
-  <input matSliderThumb />
-</mat-slider>
-<app-player-volume-panel />
+<app-player-control-panel
+  [isPlaying]="audioPlayer.isPlaying"
+  [index]="audioPlayer.currentTrack?.index ?? 0"
+  [total]="audioPlayer.total"
+  (onPlayClick)="onPlay()"
+  (onPauseClick)="onPause()"
+  (onNextClick)="onNext()"
+  (onStopClick)="onStop()"
+  (onPreviousClick)="onPrevious()"
+/>
+<div class="progress">
+  <mat-slider class="progress-slider" discrete>
+    <input matSliderThumb />
+  </mat-slider>
+  <div class="timer">
+    <span>1:52 / 3:00</span>
+  </div>
+</div>
+<app-player-volume-panel class="volume" />

@@ -4,6 +4,8 @@
   mat-icon-button
   color="primary"
   attr.aria-label="{{ ariaLabel }}"
+  (click)="handleClick()"
+  [disabled]="disabled"
 >
   <mat-icon class="icon">{{ type }}</mat-icon>
 </button>

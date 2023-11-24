@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -22,4 +22,10 @@ type IconType =
 export class IconButtonComponent {
   @Input() type: IconType = 'play_arrow';
   @Input() ariaLabel = '';
+  @Input() disabled = false;
+  @Output() onClick = new EventEmitter();
+
+  handleClick() {
+    this.onClick.emit();
+  }
 }
