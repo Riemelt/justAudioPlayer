@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatSliderModule } from '@angular/material/slider';
+import { MatSliderDragEvent, MatSliderModule } from '@angular/material/slider';
 
+import { formatTime } from '../../utilities/utilities';
 import { AudioPlayerService } from '../../services/audio-player/audio-player.service';
 import { PlayerControlPanelComponent } from '../player-control-panel/player-control-panel.component';
 import { PlayerVolumePanelComponent } from '../player-volume-panel/player-volume-panel.component';
@@ -23,6 +24,10 @@ export class PlayerComponent implements OnInit {
 
   ngOnInit(): void {}
 
+  onProgressSliderDragEnd({ value }: MatSliderDragEvent) {
+    this.audioPlayer.seek(value);
+  }
+
   onPause() {
     this.audioPlayer.pause();
   }
@@ -41,5 +46,18 @@ export class PlayerComponent implements OnInit {
 
   onNext() {
     this.audioPlayer.skip('next');
+  }
+
+  onMuteButtonClick(value: number) {
+    this.audioPlayer.mute(!this.audioPlayer.isSoundOff);
+    this.audioPlayer.volume(value);
+  }
+
+  onVolumeChange(value: number) {
+    this.audioPlayer.volume(value);
+  }
+
+  formatLabel(time: number) {
+    return formatTime(time);
   }
 }

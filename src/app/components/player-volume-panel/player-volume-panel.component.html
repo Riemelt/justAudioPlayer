@@ -1,4 +1,19 @@
-<app-icon-button type="volume_up" ariaLabel="Volume" />
-<mat-slider class="slider" discrete>
-  <input matSliderThumb />
+<app-icon-button
+  [type]="isMuted ? 'volume_off' : 'volume_up'"
+  ariaLabel="Volume"
+  (onClick)="handleMuteButtonClick()"
+/>
+<mat-slider
+  class="slider"
+  discrete
+  min="0"
+  max="1"
+  step="0.01"
+  [displayWith]="formatLabel"
+>
+  <input
+    matSliderThumb
+    (valueChange)="handleVolumeChange($event)"
+    [value]="volume"
+  />
 </mat-slider>

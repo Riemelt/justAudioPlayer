@@ -9,11 +9,31 @@
   (onPreviousClick)="onPrevious()"
 />
 <div class="progress">
-  <mat-slider class="progress-slider" discrete>
-    <input matSliderThumb />
+  <mat-slider
+    class="progress-slider"
+    discrete
+    min="0"
+    [max]="audioPlayer.duration"
+    step="0.1"
+    [disabled]="!audioPlayer.currentTrack"
+    [displayWith]="formatLabel"
+  >
+    <input
+      matSliderThumb
+      [value]="audioPlayer.time"
+      (dragEnd)="onProgressSliderDragEnd($event)"
+    />
   </mat-slider>
   <div class="timer">
-    <span>1:52 / 3:00</span>
+    <span
+      >{{ formatLabel(audioPlayer.time) }} /
+      {{ formatLabel(audioPlayer.duration) }}</span
+    >
   </div>
 </div>
-<app-player-volume-panel class="volume" />
+<app-player-volume-panel
+  class="volume"
+  [isMuted]="audioPlayer.isSoundOff"
+  (onMuteButtonClick)="onMuteButtonClick($event)"
+  (onVolumeChange)="onVolumeChange($event)"
+/>

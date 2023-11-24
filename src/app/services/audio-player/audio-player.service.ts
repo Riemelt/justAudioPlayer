@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Subject, of } from 'rxjs';
-import { Howl } from 'howler';
+import { BehaviorSubject, animationFrameScheduler, of } from 'rxjs';
+import { Howl, Howler } from 'howler';
 
 import { AUDIO_FILES } from '../../../data-sources/audio-table-data-source/mock-data';
 import { Audio } from '../../../data-sources/audio-table-data-source/types';
@@ -19,12 +19,26 @@ export class AudioPlayerService {
   public currentTrack?: Audio;
   public isPlaying = false;
   public total = 6;
+  public time = 0;
+  public duration = 0;
+  public isSoundOff = false;
 
   constructor() {}
 
+  public volume(value: number) {
+    Howler.volume(value);
+  }
+
+  public mute(value: boolean) {
+    this.isSoundOff = value;
+    Howler.mute(value);
+  }
+
   public play(id: number = this.currentTrack?.id ?? NaN) {
     this.trackStatus = 'loading';
-    const audio = this.getTrackById(id);
+    const audio = Number.isNaN(id)
+      ? this.getTrackByIndex(0)
+      : this.getTrackById(id);
 
     if (audio === undefined) {
       console.error('Track is not found');
@@ -43,6 +57,8 @@ export class AudioPlayerService {
         },
         onplay: () => {
           this.isPlaying = true;
+          this.duration = howl.duration();
+          this.runFrameScheduler();
         },
         onpause: () => {
           this.isPlaying = false;
@@ -52,11 +68,19 @@ export class AudioPlayerService {
         },
         onstop: () => {
           this.isPlaying = false;
+          this.time = 0;
+        },
+        onseek: () => {
+          this.runFrameScheduler();
         },
       });
 
     audio.howl = howl;
     howl.play();
+  }
+
+  public seek(time: number) {
+    this.currentTrack?.howl?.seek(time);
   }
 
   public pause() {
@@ -70,6 +94,25 @@ export class AudioPlayerService {
   public skipTo(id: number) {
     this.currentTrack?.howl?.stop();
     this.play(id);
+  }
+
+  public runFrameScheduler() {
+    const that = this;
+
+    animationFrameScheduler.schedule(
+      function () {
+        const howl = that.currentTrack?.howl;
+        if (!howl) return;
+
+        that.time = howl.seek();
+
+        if (that.isPlaying) {
+          this.schedule();
+        }
+      },
+      0,
+      0
+    );
   }
 
   public skip(direction: Direction) {
