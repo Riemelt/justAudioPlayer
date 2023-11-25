@@ -7,6 +7,7 @@ import {
   catchError,
   map,
   of,
+  tap,
   throwError,
 } from 'rxjs';
 import { Howl, Howler } from 'howler';
@@ -19,9 +20,6 @@ import { Direction, FreesoundResponse, Status, Audio } from './types';
   providedIn: 'root',
 })
 export class AudioPlayerService {
-  private responseSource = new BehaviorSubject<Audio[]>([]);
-  public response = this.responseSource.asObservable();
-
   public playlistStatus: Status = 'idle';
   public playlistError?: string;
   public playList?: Audio[];
@@ -29,6 +27,7 @@ export class AudioPlayerService {
   public trackStatus: Status = 'idle';
   public trackError?: string;
 
+  public readonly tracksPerPage = 5;
   public currentTrack?: Audio;
   public isPlaying = false;
   public total = 0;
@@ -42,12 +41,51 @@ export class AudioPlayerService {
 
   constructor(private http: HttpClient) {}
 
-  public setFilterQuery(query: string) {
-    this.filterQuery = query;
-  }
-
-  public setPage(page: number) {
+  public createDataRequest(
+    page: number = 1,
+    filter: string = this.filterQuery
+  ) {
     this.page = page;
+    this.filterQuery = filter;
+
+    const { freesoundApiToken, freesoundApiUrl } = environment;
+
+    const params = new URLSearchParams({
+      token: freesoundApiToken,
+      sort: 'rating_desc',
+      page_size: `${this.tracksPerPage}`,
+      page: `${page}`,
+      filter: `type:mp3 original_filename:'${filter}'`,
+      fields: 'id,name,previews',
+    });
+
+    const query = `${freesoundApiUrl}/search/text?${params}`;
+
+    this.playlistStatus = 'loading';
+
+    return this.http.get<FreesoundResponse>(query).pipe(
+      catchError(() => {
+        this.playlistError = 'Failed to load playlist';
+        this.playlistStatus = 'failed';
+        return of<FreesoundResponse>({
+          count: 0,
+          results: [],
+        });
+      }),
+      map(({ count, results }) => {
+        this.total = count;
+
+        const audioFiles: Audio[] = results.map((result) => ({
+          id: result.id,
+          name: result.name,
+          src: result.previews['preview-hq-mp3'],
+          filename: this.getFileNameFromSrc(result.previews['preview-hq-mp3']),
+          howl: null,
+        }));
+
+        this.initPlaylist(audioFiles);
+      })
+    );
   }
 
   public volume(value: number) {
@@ -80,42 +118,9 @@ export class AudioPlayerService {
     howl.play();
   }
 
-  public initHowl(src: string) {
-    this.trackStatus = 'loading';
-
-    const howl = new Howl({
-      src,
-      html5: true,
-      onload: () => {
-        this.trackStatus = 'loaded';
-      },
-      onplay: () => {
-        this.playlistStatus = 'idle';
-        this.isPlaying = true;
-        this.duration = howl.duration();
-        this.runFrameScheduler();
-      },
-      onpause: () => {
-        this.isPlaying = false;
-      },
-      onend: () => {
-        this.skip('next');
-      },
-      onstop: () => {
-        this.isPlaying = false;
-        this.time = 0;
-      },
-      onloaderror: () => {
-        this.trackStatus = 'failed';
-        this.trackError = 'Failed to load track';
-      },
-      onplayerror: () => {
-        this.trackStatus = 'failed';
-        this.trackError = 'Failed to play track';
-      },
-    });
-
-    return howl;
+  public getGlobalTrackIndex(id: number) {
+    const localIndex = this.getLocalTrackIndex(id) ?? 0;
+    return localIndex + (this.page - 1) * this.tracksPerPage;
   }
 
   public seek(time: number) {
@@ -159,77 +164,119 @@ export class AudioPlayerService {
   }
 
   public skip(direction: Direction) {
-    const newIndex =
+    const [newIndex, newPage] =
       this.currentTrack?.id === undefined
-        ? 0
-        : this.getNewIndex(
+        ? [0, 1]
+        : this.getNewPosition(
             direction,
-            this.getTrackIndex(this.currentTrack.id) ?? 0
+            this.getLocalTrackIndex(this.currentTrack.id) ?? 0
           );
 
-    const audio = this.playList?.[newIndex];
+    if (newPage !== this.page) {
+      this.createDataRequest(newPage).subscribe(() => {
+        this.skipByIndex(newIndex);
+      });
+
+      return;
+    }
+
+    this.skipByIndex(newIndex);
+  }
+
+  private skipByIndex(index: number) {
+    const audio = this.playList?.[index];
 
     if (audio === undefined) {
-      console.error('Track is not found');
+      this.trackError = 'Track is not found';
+      this.trackStatus = 'failed';
       return;
     }
 
     this.skipTo(audio.id);
   }
 
+  public getLocalTrackIndex(id: number) {
+    return this.playList?.findIndex((track) => track.id === id);
+  }
+
   public fetchAudioData(page: number = 1, filter: string = this.filterQuery) {
-    const { freesoundApiToken, freesoundApiUrl } = environment;
-
-    const params = new URLSearchParams({
-      token: freesoundApiToken,
-      sort: 'rating_desc',
-      page_size: '5',
-      page: `${page}`,
-      filter: `type:mp3 original_filename:'${filter}'`,
-      fields: 'id,name,previews',
-    });
-
-    const query = `${freesoundApiUrl}/search/text?${params}`;
-
-    this.playlistStatus = 'loading';
-
-    this.http.get<FreesoundResponse>(query).subscribe({
-      next: ({ count, results }: FreesoundResponse) => {
-        this.total = count;
-        const audioFiles: Audio[] = results.map((result) => ({
-          id: result.id,
-          name: result.name,
-          src: result.previews['preview-hq-mp3'],
-          filename: this.getFileNameFromSrc(result.previews['preview-hq-mp3']),
-          howl: null,
-        }));
-        this.initPlaylist(audioFiles);
-        this.responseSource.next(audioFiles);
-      },
-      error: () => {
-        this.playlistError = 'Failed to load playlist';
-        this.playlistStatus = 'failed';
-      },
-    });
+    this.createDataRequest(page, filter).subscribe();
   }
 
   private getFileNameFromSrc(src: string) {
     return src.slice(src.lastIndexOf('/') + 1);
   }
 
-  private getNewIndex(direction: Direction, currentIndex: number) {
+  private getNewPosition(direction: Direction, currentIndex: number) {
     const shift = direction === 'previous' ? -1 : 1;
     return this.validateIndex(currentIndex + shift);
   }
 
   private validateIndex(index: number) {
-    if (index < 0) return 0;
-    if (index >= this.total) return this.total - 1;
-    return index;
+    if (index < 0) return [this.tracksPerPage - 1, this.page - 1];
+    if (index >= this.tracksPerPage) return [0, this.page + 1];
+    return [index, this.page];
   }
 
-  public getTrackIndex(id: number) {
-    return this.playList?.findIndex((track) => track.id === id);
+  private initHowl(src: string) {
+    this.trackStatus = 'loading';
+
+    const howl: Howl = new Howl({
+      src,
+      html5: true,
+      onload: this.handleHowlLoad.bind(this),
+      onplay: () => this.handleHowlPlay(howl),
+      onpause: this.handleHowlPause.bind(this),
+      onend: this.handleHowlEnd.bind(this),
+      onstop: this.handleHowlStop.bind(this),
+      onloaderror: this.handleHowlLoadError.bind(this),
+      onplayerror: this.handleHowlPlayError.bind(this),
+    });
+
+    return howl;
+  }
+
+  private handleHowlLoad() {
+    this.trackStatus = 'loaded';
+  }
+
+  private handleHowlPlay(howl: Howl) {
+    this.playlistStatus = 'idle';
+    this.isPlaying = true;
+    this.duration = howl.duration();
+    this.runFrameScheduler();
+  }
+
+  private handleHowlPause() {
+    this.isPlaying = false;
+  }
+
+  private handleHowlEnd() {
+    const index = this.currentTrack?.id ?? 0;
+
+    if (this.getGlobalTrackIndex(index) === this.total - 1) {
+      this.currentTrack?.howl?.stop();
+      this.isPlaying = false;
+      this.time = 0;
+      return;
+    }
+
+    this.skip('next');
+  }
+
+  private handleHowlStop() {
+    this.isPlaying = false;
+    this.time = 0;
+  }
+
+  private handleHowlLoadError() {
+    this.trackStatus = 'failed';
+    this.trackError = 'Failed to load track';
+  }
+
+  private handleHowlPlayError() {
+    this.trackStatus = 'failed';
+    this.trackError = 'Failed to play track';
   }
 
   private getTrackById(id: number) {

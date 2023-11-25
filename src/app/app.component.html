@@ -34,6 +34,10 @@
     <mat-divider class="divider" />
     <app-search-bar (onSearch)="onSearch($event)" />
     <app-audio-table />
-    <app-player />
+    <div class="player">
+      <app-player
+        [@openClose]="audioPlayer.trackStatus !== 'idle' ? 'open' : 'closed'"
+      />
+    </div>
   </div>
 </app-layout>

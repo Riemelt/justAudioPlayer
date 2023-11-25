@@ -20,7 +20,6 @@ export class AudioTableComponent implements OnInit {
   ngOnInit(): void {}
 
   onPageChange({ pageIndex }: PageEvent) {
-    this.audioPlayer.setPage(pageIndex + 1);
     this.audioPlayer.fetchAudioData(pageIndex + 1);
   }
 

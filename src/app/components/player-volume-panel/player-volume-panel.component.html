@@ -1,5 +1,5 @@
 <app-icon-button
-  [type]="isMuted ? 'volume_off' : 'volume_up'"
+  [type]="isMuted || volume === 0 ? 'volume_off' : 'volume_up'"
   ariaLabel="Volume"
   (onClick)="handleMuteButtonClick()"
 />

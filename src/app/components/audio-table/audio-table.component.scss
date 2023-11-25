@@ -18,6 +18,10 @@
   text-overflow: ellipsis;
 }
 
+.row {
+  transition: background-color 100ms;
+}
+
 .row:hover {
   background-color: variables.$primary;
 }
@@ -31,4 +35,13 @@
   padding: 10px 0;
   display: flex;
   justify-content: center;
+}
+
+.paginator {
+  margin-top: 15px;
+
+  @media (max-width: variables.$md) {
+    display: flex;
+    justify-content: center;
+  }
 }

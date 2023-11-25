@@ -1,6 +1,6 @@
 <app-player-control-panel
   [isPlaying]="audioPlayer.isPlaying"
-  [index]="audioPlayer.getTrackIndex(audioPlayer.currentTrack?.id ?? 0) ?? 0"
+  [index]="audioPlayer.getGlobalTrackIndex(audioPlayer.currentTrack?.id ?? 0)"
   [total]="audioPlayer.total"
   (onPlayClick)="onPlay()"
   (onPauseClick)="onPause()"

@@ -9,6 +9,14 @@ import { AudioTableComponent } from './components/audio-table/audio-table.compon
 import { PlayerComponent } from './components/player/player.component';
 import { AudioPlayerService } from './services/audio-player/audio-player.service';
 import { SearchBarComponent } from './components/search-bar/search-bar.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {
+  trigger,
+  state,
+  style,
+  transition,
+  animate,
+} from '@angular/animations';
 
 @Component({
   selector: 'app-root',
@@ -25,6 +33,27 @@ import { SearchBarComponent } from './components/search-bar/search-bar.component
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
+  animations: [
+    trigger('openClose', [
+      state(
+        'open',
+        style({
+          height: '*',
+          visibility: 'visible',
+          opacity: '1',
+        })
+      ),
+      state(
+        'closed',
+        style({
+          height: '0px',
+          visibility: 'hidden',
+          opacity: '0',
+        })
+      ),
+      transition('open <=> closed', [animate('0.2s')]),
+    ]),
+  ],
 })
 export class AppComponent implements OnInit {
   title = 'justAudioPlayer';
@@ -36,7 +65,6 @@ export class AppComponent implements OnInit {
   }
 
   onSearch(query: string) {
-    this.audioPlayer.setFilterQuery(query);
-    this.audioPlayer.fetchAudioData(1);
+    this.audioPlayer.fetchAudioData(1, query);
   }
 }

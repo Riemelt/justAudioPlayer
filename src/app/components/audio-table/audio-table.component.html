@@ -27,9 +27,12 @@
   ></tr>
 </table>
 <mat-paginator
+  class="paginator"
   *ngIf="audioPlayer.playList && audioPlayer.playList.length"
   [length]="audioPlayer.total"
-  [pageSize]="5"
+  [pageSize]="audioPlayer.tracksPerPage"
+  [pageIndex]="audioPlayer.page - 1"
+  hidePageSize="true"
   aria-label="Select page"
   (page)="onPageChange($event)"
 ></mat-paginator>

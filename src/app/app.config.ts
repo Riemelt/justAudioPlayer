@@ -6,7 +6,10 @@ import {
   withFetch,
 } from '@angular/common/http';
 import { provideClientHydration } from '@angular/platform-browser';
-import { provideAnimations } from '@angular/platform-browser/animations';
+import {
+  BrowserAnimationsModule,
+  provideAnimations,
+} from '@angular/platform-browser/animations';
 
 import { routes } from './app.routes';
 
@@ -17,5 +20,6 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     importProvidersFrom(HttpClientModule),
     provideHttpClient(withFetch()),
+    BrowserAnimationsModule,
   ],
 };
