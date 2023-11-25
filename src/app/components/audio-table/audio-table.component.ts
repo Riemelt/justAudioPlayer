@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 
-import { AudioDataSource } from '../../../data-sources/audio-table-data-source/audio-table-data-source';
 import { AudioPlayerService } from '../../services/audio-player/audio-player.service';
 
 @Component({
@@ -15,7 +14,6 @@ import { AudioPlayerService } from '../../services/audio-player/audio-player.ser
 })
 export class AudioTableComponent implements OnInit {
   displayedColumns: string[] = ['id', 'name', 'filename'];
-  audioDataSource = new AudioDataSource(this.audioPlayer);
 
   constructor(public audioPlayer: AudioPlayerService) {}
 
@@ -23,6 +21,7 @@ export class AudioTableComponent implements OnInit {
 
   onPageChange({ pageIndex }: PageEvent) {
     this.audioPlayer.setPage(pageIndex + 1);
+    this.audioPlayer.fetchAudioData(pageIndex + 1);
   }
 
   onRowClick(id: number) {

@@ -12,10 +12,23 @@
   cursor: pointer;
 }
 
+.mat-mdc-dell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .row:hover {
   background-color: variables.$primary;
 }
 
 .row_active {
   background-color: variables.$primary-25;
+}
+
+.notFound {
+  font-size: 18px;
+  padding: 10px 0;
+  display: flex;
+  justify-content: center;
 }

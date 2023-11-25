@@ -4,37 +4,47 @@ import {
   BehaviorSubject,
   Subscription,
   animationFrameScheduler,
+  catchError,
+  map,
   of,
+  throwError,
 } from 'rxjs';
 import { Howl, Howler } from 'howler';
 
-import { AUDIO_FILES } from '../../../data-sources/audio-table-data-source/mock-data';
-import { Audio } from '../../../data-sources/audio-table-data-source/types';
 import { environment } from '../../../environments/environment';
 
-import { Direction, FreesoundResponse, Status } from './types';
+import { Direction, FreesoundResponse, Status, Audio } from './types';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AudioPlayerService {
   private responseSource = new BehaviorSubject<Audio[]>([]);
-
   public response = this.responseSource.asObservable();
-  public trackStatus: Status = 'idle';
 
-  private playList?: Audio[];
+  public playlistStatus: Status = 'idle';
+  public playlistError?: string;
+  public playList?: Audio[];
+
+  public trackStatus: Status = 'idle';
+  public trackError?: string;
+
   public currentTrack?: Audio;
   public isPlaying = false;
-  public total = 6;
+  public total = 0;
   public time = 0;
   public duration = 0;
   public isSoundOff = false;
   public page = 1;
+  public filterQuery = '';
 
   private frameSubscription: Subscription | null = null;
 
   constructor(private http: HttpClient) {}
+
+  public setFilterQuery(query: string) {
+    this.filterQuery = query;
+  }
 
   public setPage(page: number) {
     this.page = page;
@@ -50,48 +60,62 @@ export class AudioPlayerService {
   }
 
   public play(id: number = this.currentTrack?.id ?? NaN) {
-    this.trackStatus = 'loading';
     const audio = Number.isNaN(id)
-      ? this.getTrackByIndex(0)
+      ? this.playList?.[0]
+      : id === this.currentTrack?.id
+      ? this.currentTrack
       : this.getTrackById(id);
 
     if (audio === undefined) {
-      console.error('Track is not found');
+      this.trackError = 'Track not found';
+      this.trackStatus = 'failed';
       return;
     }
 
     this.currentTrack = audio;
 
-    const howl =
-      audio.howl ??
-      new Howl({
-        src: audio.src,
-        html5: true,
-        onload: () => {
-          this.trackStatus = 'loaded';
-        },
-        onplay: () => {
-          this.isPlaying = true;
-          this.duration = howl.duration();
-          this.runFrameScheduler();
-        },
-        onpause: () => {
-          this.isPlaying = false;
-        },
-        onend: () => {
-          this.skip('next');
-        },
-        onstop: () => {
-          this.isPlaying = false;
-          this.time = 0;
-        },
-        onseek: (value) => {
-          //this.runFrameScheduler();
-        },
-      });
+    const howl = audio.howl ?? this.initHowl(audio.src);
 
     audio.howl = howl;
     howl.play();
+  }
+
+  public initHowl(src: string) {
+    this.trackStatus = 'loading';
+
+    const howl = new Howl({
+      src,
+      html5: true,
+      onload: () => {
+        this.trackStatus = 'loaded';
+      },
+      onplay: () => {
+        this.playlistStatus = 'idle';
+        this.isPlaying = true;
+        this.duration = howl.duration();
+        this.runFrameScheduler();
+      },
+      onpause: () => {
+        this.isPlaying = false;
+      },
+      onend: () => {
+        this.skip('next');
+      },
+      onstop: () => {
+        this.isPlaying = false;
+        this.time = 0;
+      },
+      onloaderror: () => {
+        this.trackStatus = 'failed';
+        this.trackError = 'Failed to load track';
+      },
+      onplayerror: () => {
+        this.trackStatus = 'failed';
+        this.trackError = 'Failed to play track';
+      },
+    });
+
+    return howl;
   }
 
   public seek(time: number) {
@@ -136,11 +160,14 @@ export class AudioPlayerService {
 
   public skip(direction: Direction) {
     const newIndex =
-      this.currentTrack?.index === undefined
+      this.currentTrack?.id === undefined
         ? 0
-        : this.getNewIndex(direction, this.currentTrack.index);
+        : this.getNewIndex(
+            direction,
+            this.getTrackIndex(this.currentTrack.id) ?? 0
+          );
 
-    const audio = this.getTrackByIndex(newIndex);
+    const audio = this.playList?.[newIndex];
 
     if (audio === undefined) {
       console.error('Track is not found');
@@ -150,7 +177,7 @@ export class AudioPlayerService {
     this.skipTo(audio.id);
   }
 
-  public fetchAudioData(page: number = 1, filter: string = '') {
+  public fetchAudioData(page: number = 1, filter: string = this.filterQuery) {
     const { freesoundApiToken, freesoundApiUrl } = environment;
 
     const params = new URLSearchParams({
@@ -164,9 +191,30 @@ export class AudioPlayerService {
 
     const query = `${freesoundApiUrl}/search/text?${params}`;
 
-    this.http.get(query).subscribe((resp: FreesoundResponse) => {
-      console.log(resp);
+    this.playlistStatus = 'loading';
+
+    this.http.get<FreesoundResponse>(query).subscribe({
+      next: ({ count, results }: FreesoundResponse) => {
+        this.total = count;
+        const audioFiles: Audio[] = results.map((result) => ({
+          id: result.id,
+          name: result.name,
+          src: result.previews['preview-hq-mp3'],
+          filename: this.getFileNameFromSrc(result.previews['preview-hq-mp3']),
+          howl: null,
+        }));
+        this.initPlaylist(audioFiles);
+        this.responseSource.next(audioFiles);
+      },
+      error: () => {
+        this.playlistError = 'Failed to load playlist';
+        this.playlistStatus = 'failed';
+      },
     });
+  }
+
+  private getFileNameFromSrc(src: string) {
+    return src.slice(src.lastIndexOf('/') + 1);
   }
 
   private getNewIndex(direction: Direction, currentIndex: number) {
@@ -180,8 +228,8 @@ export class AudioPlayerService {
     return index;
   }
 
-  private getTrackByIndex(index: number) {
-    return this.playList?.find((track) => track.index === index);
+  public getTrackIndex(id: number) {
+    return this.playList?.findIndex((track) => track.id === id);
   }
 
   private getTrackById(id: number) {
@@ -189,6 +237,7 @@ export class AudioPlayerService {
   }
 
   private initPlaylist(audioFiles: Audio[]) {
+    this.playlistStatus = 'loaded';
     this.playList = audioFiles;
   }
 }

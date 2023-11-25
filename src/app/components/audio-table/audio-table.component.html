@@ -1,4 +1,8 @@
-<table mat-table [dataSource]="audioDataSource">
+<table
+  *ngIf="audioPlayer.playList && audioPlayer.playList.length; else notFound"
+  mat-table
+  [dataSource]="audioPlayer.playList"
+>
   <ng-container matColumnDef="id">
     <th mat-header-cell *matHeaderCellDef>#</th>
     <td mat-cell *matCellDef="let audio">{{ audio.id }}</td>
@@ -23,8 +27,10 @@
   ></tr>
 </table>
 <mat-paginator
+  *ngIf="audioPlayer.playList && audioPlayer.playList.length"
   [length]="audioPlayer.total"
   [pageSize]="5"
   aria-label="Select page"
   (page)="onPageChange($event)"
 ></mat-paginator>
+<ng-template #notFound><div class="notFound">No results</div></ng-template>

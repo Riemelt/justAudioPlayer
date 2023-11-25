@@ -1,19 +1,38 @@
 <app-layout>
   <h1 class="title">Just an Audio Player</h1>
   <div class="main mat-elevation-z8">
+    <div *ngIf="audioPlayer.playlistStatus === 'loading'" class="loading-shade">
+      <mat-spinner />
+    </div>
     <div class="status">
       <div class="status-title">
-        <ng-template [ngIf]="audioPlayer.currentTrack !== undefined">
-          Now playing: {{ audioPlayer.currentTrack.name }}
+        <ng-template
+          [ngIf]="audioPlayer.playlistStatus === 'failed'"
+          [ngIfElse]="handleTrackStatus"
+        >
+          {{ audioPlayer.playlistError }}
         </ng-template>
+        <ng-template #handleTrackStatus>
+          <ng-template [ngIf]="audioPlayer.trackStatus === 'loaded'">
+            Now playing: {{ audioPlayer.currentTrack?.name }}
+          </ng-template>
 
-        <ng-template [ngIf]="audioPlayer.currentTrack === undefined">
-          Waiting
+          <ng-template [ngIf]="audioPlayer.trackStatus === 'loading'">
+            Loading <mat-spinner diameter="20" />
+          </ng-template>
+
+          <ng-template [ngIf]="audioPlayer.trackStatus === 'failed'">
+            {{ audioPlayer.trackError }}
+          </ng-template>
+
+          <ng-template [ngIf]="audioPlayer.trackStatus === 'idle'">
+            Waiting
+          </ng-template>
         </ng-template>
       </div>
     </div>
     <mat-divider class="divider" />
-    <app-search-bar />
+    <app-search-bar (onSearch)="onSearch($event)" />
     <app-audio-table />
     <app-player />
   </div>

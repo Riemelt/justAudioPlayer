@@ -1,4 +1,10 @@
-import { Audio } from '../../../data-sources/audio-table-data-source/types';
+export type Audio = {
+  id: number;
+  name: string;
+  src: string;
+  filename: string;
+  howl: Howl | null;
+};
 
 export type Status = 'idle' | 'failed' | 'loaded' | 'loading';
 export type Direction = 'previous' | 'next';
