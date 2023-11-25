@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
+import { MatDividerModule } from '@angular/material/divider';
 
 import { LayoutComponent } from './layouts/layout/layout.component';
 import { AudioTableComponent } from './components/audio-table/audio-table.component';
 import { PlayerComponent } from './components/player/player.component';
 import { AudioPlayerService } from './services/audio-player/audio-player.service';
+import { SearchBarComponent } from './components/search-bar/search-bar.component';
 
 @Component({
   selector: 'app-root',
@@ -16,6 +18,8 @@ import { AudioPlayerService } from './services/audio-player/audio-player.service
     LayoutComponent,
     AudioTableComponent,
     PlayerComponent,
+    SearchBarComponent,
+    MatDividerModule,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',

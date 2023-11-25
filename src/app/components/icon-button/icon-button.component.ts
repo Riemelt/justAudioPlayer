@@ -10,7 +10,8 @@ type IconType =
   | 'pause'
   | 'volume_up'
   | 'volume_off'
-  | 'stop';
+  | 'stop'
+  | 'search';
 
 @Component({
   selector: 'app-icon-button',

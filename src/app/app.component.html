@@ -1,5 +1,20 @@
 <app-layout>
   <h1 class="title">Just an Audio Player</h1>
-  <app-audio-table />
-  <app-player />
+  <div class="main mat-elevation-z8">
+    <div class="status">
+      <div class="status-title">
+        <ng-template [ngIf]="audioPlayer.currentTrack !== undefined">
+          Now playing: {{ audioPlayer.currentTrack.name }}
+        </ng-template>
+
+        <ng-template [ngIf]="audioPlayer.currentTrack === undefined">
+          Waiting
+        </ng-template>
+      </div>
+    </div>
+    <mat-divider class="divider" />
+    <app-search-bar />
+    <app-audio-table />
+    <app-player />
+  </div>
 </app-layout>

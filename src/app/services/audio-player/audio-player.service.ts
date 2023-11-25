@@ -1,10 +1,18 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, animationFrameScheduler, of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import {
+  BehaviorSubject,
+  Subscription,
+  animationFrameScheduler,
+  of,
+} from 'rxjs';
 import { Howl, Howler } from 'howler';
 
 import { AUDIO_FILES } from '../../../data-sources/audio-table-data-source/mock-data';
 import { Audio } from '../../../data-sources/audio-table-data-source/types';
-import { Direction, Status } from './types';
+import { environment } from '../../../environments/environment';
+
+import { Direction, FreesoundResponse, Status } from './types';
 
 @Injectable({
   providedIn: 'root',
@@ -22,8 +30,15 @@ export class AudioPlayerService {
   public time = 0;
   public duration = 0;
   public isSoundOff = false;
+  public page = 1;
 
-  constructor() {}
+  private frameSubscription: Subscription | null = null;
+
+  constructor(private http: HttpClient) {}
+
+  public setPage(page: number) {
+    this.page = page;
+  }
 
   public volume(value: number) {
     Howler.volume(value);
@@ -64,14 +79,14 @@ export class AudioPlayerService {
           this.isPlaying = false;
         },
         onend: () => {
-          this.isPlaying = false;
+          this.skip('next');
         },
         onstop: () => {
           this.isPlaying = false;
           this.time = 0;
         },
-        onseek: () => {
-          this.runFrameScheduler();
+        onseek: (value) => {
+          //this.runFrameScheduler();
         },
       });
 
@@ -98,8 +113,12 @@ export class AudioPlayerService {
 
   public runFrameScheduler() {
     const that = this;
+    if (this.frameSubscription) {
+      this.frameSubscription.unsubscribe();
+      this.frameSubscription = null;
+    }
 
-    animationFrameScheduler.schedule(
+    this.frameSubscription = animationFrameScheduler.schedule(
       function () {
         const howl = that.currentTrack?.howl;
         if (!howl) return;
@@ -131,10 +150,22 @@ export class AudioPlayerService {
     this.skipTo(audio.id);
   }
 
-  public fetchAudioData() {
-    of(AUDIO_FILES).subscribe((resp) => {
-      this.initPlaylist(resp);
-      this.responseSource.next(resp);
+  public fetchAudioData(page: number = 1, filter: string = '') {
+    const { freesoundApiToken, freesoundApiUrl } = environment;
+
+    const params = new URLSearchParams({
+      token: freesoundApiToken,
+      sort: 'rating_desc',
+      page_size: '5',
+      page: `${page}`,
+      filter: `type:mp3 original_filename:'${filter}'`,
+      fields: 'id,name,previews',
+    });
+
+    const query = `${freesoundApiUrl}/search/text?${params}`;
+
+    this.http.get(query).subscribe((resp: FreesoundResponse) => {
+      console.log(resp);
     });
   }
 

@@ -9,7 +9,9 @@
   </ng-container>
   <ng-container matColumnDef="filename">
     <th mat-header-cell *matHeaderCellDef>Filename</th>
-    <td mat-cell *matCellDef="let audio">{{ audio.filename }}</td>
+    <td [title]="audio.filename" mat-cell *matCellDef="let audio">
+      {{ audio.filename }}
+    </td>
   </ng-container>
   <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
   <tr
@@ -20,3 +22,9 @@
     *matRowDef="let myRowData; columns: displayedColumns"
   ></tr>
 </table>
+<mat-paginator
+  [length]="audioPlayer.total"
+  [pageSize]="5"
+  aria-label="Select page"
+  (page)="onPageChange($event)"
+></mat-paginator>
