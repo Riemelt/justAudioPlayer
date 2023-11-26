@@ -1,14 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-  BehaviorSubject,
   Subscription,
   animationFrameScheduler,
   catchError,
   map,
   of,
-  tap,
-  throwError,
 } from 'rxjs';
 import { Howl, Howler } from 'howler';
 
@@ -35,13 +32,97 @@ export class AudioPlayerService {
   public duration = 0;
   public isSoundOff = false;
   public page = 1;
-  public filterQuery = '';
 
+  private filterQuery = '';
   private frameSubscription: Subscription | null = null;
 
   constructor(private http: HttpClient) {}
 
-  public createDataRequest(
+  public volume(value: number) {
+    Howler.volume(value);
+  }
+
+  public mute(value: boolean) {
+    this.isSoundOff = value;
+    Howler.mute(value);
+  }
+
+  public play(id: number = this.currentTrack?.id ?? NaN) {
+    const audio = Number.isNaN(id)
+      ? this.playList?.[0]
+      : id === this.currentTrack?.id
+      ? this.currentTrack
+      : this.getTrackById(id);
+
+    if (audio === undefined) {
+      this.trackError = 'Track not found';
+      this.trackStatus = 'failed';
+      return;
+    }
+
+    this.currentTrack = audio;
+
+    const howl = audio.howl ?? this.initHowl(audio.src);
+
+    audio.howl = howl;
+    howl.play();
+  }
+
+  public seek(time: number) {
+    this.currentTrack?.howl?.seek(time);
+  }
+
+  public pause() {
+    this.currentTrack?.howl?.pause();
+  }
+
+  public stop() {
+    this.currentTrack?.howl?.stop();
+  }
+
+  public skipTo(id: number) {
+    this.currentTrack?.howl?.stop();
+    this.play(id);
+  }
+
+  public skip(direction: Direction) {
+    const [newIndex, newPage] =
+      this.currentTrack?.id === undefined
+        ? [0, 1]
+        : this.getNewPosition(
+            direction,
+            this.getLocalTrackIndex(this.currentTrack.id) ?? 0
+          );
+
+    if (newPage !== this.page) {
+      this.createAudioDataRequest(newPage).subscribe(() => {
+        this.skipByIndex(newIndex);
+      });
+
+      return;
+    }
+
+    this.skipByIndex(newIndex);
+  }
+
+  public fetchAudioData(page: number = 1, filter: string = this.filterQuery) {
+    this.createAudioDataRequest(page, filter).subscribe();
+  }
+
+  public getGlobalTrackIndex(id: number) {
+    const localIndex = this.getLocalTrackIndex(id) ?? 0;
+    return localIndex + (this.page - 1) * this.tracksPerPage;
+  }
+
+  private getLocalTrackIndex(id: number) {
+    return this.playList?.findIndex((track) => track.id === id);
+  }
+
+  private getTrackById(id: number) {
+    return this.playList?.find((track) => track.id === id);
+  }
+
+  private createAudioDataRequest(
     page: number = 1,
     filter: string = this.filterQuery
   ) {
@@ -88,59 +169,34 @@ export class AudioPlayerService {
     );
   }
 
-  public volume(value: number) {
-    Howler.volume(value);
-  }
-
-  public mute(value: boolean) {
-    this.isSoundOff = value;
-    Howler.mute(value);
-  }
-
-  public play(id: number = this.currentTrack?.id ?? NaN) {
-    const audio = Number.isNaN(id)
-      ? this.playList?.[0]
-      : id === this.currentTrack?.id
-      ? this.currentTrack
-      : this.getTrackById(id);
+  private skipByIndex(index: number) {
+    const audio = this.playList?.[index];
 
     if (audio === undefined) {
-      this.trackError = 'Track not found';
+      this.trackError = 'Track is not found';
       this.trackStatus = 'failed';
       return;
     }
 
-    this.currentTrack = audio;
-
-    const howl = audio.howl ?? this.initHowl(audio.src);
-
-    audio.howl = howl;
-    howl.play();
+    this.skipTo(audio.id);
   }
 
-  public getGlobalTrackIndex(id: number) {
-    const localIndex = this.getLocalTrackIndex(id) ?? 0;
-    return localIndex + (this.page - 1) * this.tracksPerPage;
+  private getNewPosition(direction: Direction, currentIndex: number) {
+    const shift = direction === 'previous' ? -1 : 1;
+    return this.validateIndex(currentIndex + shift);
   }
 
-  public seek(time: number) {
-    this.currentTrack?.howl?.seek(time);
+  private validateIndex(index: number) {
+    if (index < 0) return [this.tracksPerPage - 1, this.page - 1];
+    if (index >= this.tracksPerPage) return [0, this.page + 1];
+    return [index, this.page];
   }
 
-  public pause() {
-    this.currentTrack?.howl?.pause();
+  private getFileNameFromSrc(src: string) {
+    return src.slice(src.lastIndexOf('/') + 1);
   }
 
-  public stop() {
-    this.currentTrack?.howl?.stop();
-  }
-
-  public skipTo(id: number) {
-    this.currentTrack?.howl?.stop();
-    this.play(id);
-  }
-
-  public runFrameScheduler() {
+  private runFrameScheduler() {
     const that = this;
     if (this.frameSubscription) {
       this.frameSubscription.unsubscribe();
@@ -163,59 +219,9 @@ export class AudioPlayerService {
     );
   }
 
-  public skip(direction: Direction) {
-    const [newIndex, newPage] =
-      this.currentTrack?.id === undefined
-        ? [0, 1]
-        : this.getNewPosition(
-            direction,
-            this.getLocalTrackIndex(this.currentTrack.id) ?? 0
-          );
-
-    if (newPage !== this.page) {
-      this.createDataRequest(newPage).subscribe(() => {
-        this.skipByIndex(newIndex);
-      });
-
-      return;
-    }
-
-    this.skipByIndex(newIndex);
-  }
-
-  private skipByIndex(index: number) {
-    const audio = this.playList?.[index];
-
-    if (audio === undefined) {
-      this.trackError = 'Track is not found';
-      this.trackStatus = 'failed';
-      return;
-    }
-
-    this.skipTo(audio.id);
-  }
-
-  public getLocalTrackIndex(id: number) {
-    return this.playList?.findIndex((track) => track.id === id);
-  }
-
-  public fetchAudioData(page: number = 1, filter: string = this.filterQuery) {
-    this.createDataRequest(page, filter).subscribe();
-  }
-
-  private getFileNameFromSrc(src: string) {
-    return src.slice(src.lastIndexOf('/') + 1);
-  }
-
-  private getNewPosition(direction: Direction, currentIndex: number) {
-    const shift = direction === 'previous' ? -1 : 1;
-    return this.validateIndex(currentIndex + shift);
-  }
-
-  private validateIndex(index: number) {
-    if (index < 0) return [this.tracksPerPage - 1, this.page - 1];
-    if (index >= this.tracksPerPage) return [0, this.page + 1];
-    return [index, this.page];
+  private initPlaylist(audioFiles: Audio[]) {
+    this.playlistStatus = 'loaded';
+    this.playList = audioFiles;
   }
 
   private initHowl(src: string) {
@@ -255,7 +261,6 @@ export class AudioPlayerService {
     const index = this.currentTrack?.id ?? 0;
 
     if (this.getGlobalTrackIndex(index) === this.total - 1) {
-      this.currentTrack?.howl?.stop();
       this.isPlaying = false;
       this.time = 0;
       return;
@@ -277,14 +282,5 @@ export class AudioPlayerService {
   private handleHowlPlayError() {
     this.trackStatus = 'failed';
     this.trackError = 'Failed to play track';
-  }
-
-  private getTrackById(id: number) {
-    return this.playList?.find((track) => track.id === id);
-  }
-
-  private initPlaylist(audioFiles: Audio[]) {
-    this.playlistStatus = 'loaded';
-    this.playList = audioFiles;
   }
 }

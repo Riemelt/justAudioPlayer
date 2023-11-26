@@ -26,7 +26,7 @@ export class IconButtonComponent {
   @Input() disabled = false;
   @Output() onClick = new EventEmitter();
 
-  handleClick() {
+  public handleClick() {
     this.onClick.emit();
   }
 }

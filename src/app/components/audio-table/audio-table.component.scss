@@ -5,7 +5,7 @@
 }
 
 .mat-column-filename {
-  max-width: 80px;
+  max-width: 5rem;
 }
 
 .mat-mdc-row .mat-mdc-cell {
@@ -30,18 +30,18 @@
   background-color: variables.$primary-25;
 }
 
-.notFound {
-  font-size: 18px;
-  padding: 10px 0;
-  display: flex;
-  justify-content: center;
-}
-
 .paginator {
-  margin-top: 15px;
+  margin-top: 0.9375rem;
 
   @media (max-width: variables.$md) {
     display: flex;
     justify-content: center;
   }
+}
+
+.notFound {
+  font-size: 1.125rem;
+  padding: 0.625rem 0;
+  display: flex;
+  justify-content: center;
 }

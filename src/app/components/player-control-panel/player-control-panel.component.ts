@@ -21,23 +21,23 @@ export class PlayerControlPanelComponent {
   @Output() onPreviousClick = new EventEmitter();
   @Output() onNextClick = new EventEmitter();
 
-  handlePauseButton() {
+  public handlePauseButton() {
     this.onPauseClick.emit();
   }
 
-  handlePlayButton() {
+  public handlePlayButton() {
     this.onPlayClick.emit();
   }
 
-  handleStopButton() {
+  public handleStopButton() {
     this.onStopClick.emit();
   }
 
-  handlePreviousButton() {
+  public handlePreviousButton() {
     this.onPreviousClick.emit();
   }
 
-  handleNextButton() {
+  public handleNextButton() {
     this.onNextClick.emit();
   }
 }

@@ -4,14 +4,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
-import {
-  BehaviorSubject,
-  Observable,
-  Subject,
-  debounceTime,
-  distinctUntilChanged,
-  tap,
-} from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 
 @Component({
   selector: 'app-search-bar',
@@ -41,7 +34,7 @@ export class SearchBarComponent implements OnInit {
       });
   }
 
-  handleInputChange({ target }: Event) {
+  public handleInputChange({ target }: Event) {
     if (!(target instanceof HTMLInputElement)) return;
     this.searchStream$.next(target.value);
   }

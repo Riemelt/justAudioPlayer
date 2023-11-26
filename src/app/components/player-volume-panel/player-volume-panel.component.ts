@@ -16,18 +16,18 @@ export class PlayerVolumePanelComponent {
   @Output() onVolumeChange = new EventEmitter<number>();
   @Input() isMuted = false;
 
-  volume: number = 1;
+  public volume: number = 1;
 
-  handleMuteButtonClick() {
+  public handleMuteButtonClick() {
     this.onMuteButtonClick.emit(this.volume);
   }
 
-  handleVolumeChange(value: number) {
+  public handleVolumeChange(value: number) {
     this.volume = value;
     this.onVolumeChange.emit(value);
   }
 
-  formatLabel(value: number) {
+  public formatLabel(value: number) {
     return `${Math.round(value * 100)}`;
   }
 }

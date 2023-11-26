@@ -19,9 +19,3 @@ export type FreesoundResponse = {
     };
   }[];
 };
-
-export type AudioPlayerResponse = {
-  status: Status;
-  error?: string;
-  data?: Audio[];
-};

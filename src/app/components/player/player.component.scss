@@ -3,7 +3,7 @@
 :host {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   flex-wrap: wrap;
 
   @media (max-width: variables.$md) {
@@ -22,14 +22,14 @@
 }
 
 .progress-slider {
-  margin: 0 20px;
+  margin: 0 1.25rem;
   flex-grow: 1;
 }
 
 .timer {
-  margin-left: 15px;
+  margin-left: 0.9375rem;
   display: flex;
-  gap: 5px;
+  gap: 0.3125rem;
 }
 
 .volume {

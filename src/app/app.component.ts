@@ -3,13 +3,6 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-
-import { LayoutComponent } from './layouts/layout/layout.component';
-import { AudioTableComponent } from './components/audio-table/audio-table.component';
-import { PlayerComponent } from './components/player/player.component';
-import { AudioPlayerService } from './services/audio-player/audio-player.service';
-import { SearchBarComponent } from './components/search-bar/search-bar.component';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {
   trigger,
   state,
@@ -17,6 +10,12 @@ import {
   transition,
   animate,
 } from '@angular/animations';
+
+import { LayoutComponent } from './layouts/layout/layout.component';
+import { AudioTableComponent } from './components/audio-table/audio-table.component';
+import { PlayerComponent } from './components/player/player.component';
+import { AudioPlayerService } from './services/audio-player/audio-player.service';
+import { SearchBarComponent } from './components/search-bar/search-bar.component';
 
 @Component({
   selector: 'app-root',
@@ -41,6 +40,7 @@ import {
           height: '*',
           visibility: 'visible',
           opacity: '1',
+          display: '*',
         })
       ),
       state(
@@ -49,6 +49,7 @@ import {
           height: '0px',
           visibility: 'hidden',
           opacity: '0',
+          display: 'none',
         })
       ),
       transition('open <=> closed', [animate('0.2s')]),
