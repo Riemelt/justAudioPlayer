@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { MatDividerModule } from '@angular/material/divider';
@@ -57,11 +57,15 @@ import { SearchBarComponent } from './components/search-bar/search-bar.component
   ],
 })
 export class AppComponent implements OnInit {
-  title = 'justAudioPlayer';
-
-  constructor(public audioPlayer: AudioPlayerService) {}
+  constructor(
+    public audioPlayer: AudioPlayerService,
+    private readonly changeDetector: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
+    this.audioPlayer.onTimeNotify().subscribe(() => {
+      this.changeDetector.detectChanges();
+    });
     this.audioPlayer.fetchAudioData();
   }
 

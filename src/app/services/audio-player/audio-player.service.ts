@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
+  Observable,
+  Subject,
   Subscription,
   animationFrameScheduler,
   catchError,
@@ -36,7 +38,13 @@ export class AudioPlayerService {
   private filterQuery = '';
   private frameSubscription: Subscription | null = null;
 
+  private timeNotifierSubject = new Subject<number>();
+
   constructor(private http: HttpClient) {}
+
+  public onTimeNotify(): Observable<number> {
+    return this.timeNotifierSubject.asObservable();
+  }
 
   public volume(value: number) {
     Howler.volume(value);
@@ -120,6 +128,10 @@ export class AudioPlayerService {
 
   private getTrackById(id: number) {
     return this.playList?.find((track) => track.id === id);
+  }
+
+  private timeNotify(time: number) {
+    this.timeNotifierSubject.next(time);
   }
 
   private createAudioDataRequest(
@@ -209,6 +221,7 @@ export class AudioPlayerService {
         if (!howl) return;
 
         that.time = howl.seek();
+        that.timeNotify(that.time);
 
         if (that.isPlaying) {
           this.schedule();
