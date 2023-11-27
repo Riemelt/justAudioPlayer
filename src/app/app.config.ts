@@ -21,5 +21,6 @@ export const appConfig: ApplicationConfig = {
     importProvidersFrom(HttpClientModule),
     provideHttpClient(withFetch()),
     BrowserAnimationsModule,
+    HttpClientModule,
   ],
 };

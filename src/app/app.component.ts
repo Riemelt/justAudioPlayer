@@ -57,6 +57,8 @@ import { SearchBarComponent } from './components/search-bar/search-bar.component
   ],
 })
 export class AppComponent implements OnInit {
+  title = 'justAudioPlayer';
+
   constructor(
     public audioPlayer: AudioPlayerService,
     private readonly changeDetector: ChangeDetectorRef
